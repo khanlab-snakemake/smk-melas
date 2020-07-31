@@ -1,0 +1,30 @@
+from os.path import join
+import pandas as pd
+
+configfile: 'config/config.yaml'
+container: config['standard']
+
+# Load participants.tsv file
+df = pd.read_table(config['participants_tsv'])
+subjects = df.participant_id.to_list() 
+
+hemispheres = config['hemispheres']
+surfaces = config['surfaces']
+
+wildcard_constraints:
+    subject = "[-a-zA-Z0-9]+",
+    surfaces = "white|pial|sphere.reg"
+
+rule all:
+    input:
+        #epi = expand('output/epi_surf_32k_fs_LR/S001-C001/{hemi}.rsfMRI.32k_fs_LR.func.gii', hemi=hemispheres),
+        warp = expand('output/coreg_anat/{subject}/nonlinear/NonlinearRegInverseWarp.nii.gz', subject=subjects)
+
+## EPI data preprocessing
+include: 'rules/preprocessing.smk'
+
+## Coregistration of EPI to anatomy to MNI
+include: 'rules/coregistration.smk'
+
+## Surface-based data sampling  
+include: 'rules/surface.smk'

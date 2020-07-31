@@ -1,0 +1,41 @@
+# Input directives
+participants_tsv: config/participants.tsv
+input_dir: /scratch/rhaast/MELAS/data
+
+# Input data
+scans:
+  - 'rest'
+  - 'topup'
+
+hemispheres:
+  - 'lh'
+  - 'rh'
+  
+surfaces:
+  - 'white'
+  - 'pial'
+  - 'sphere.reg'
+
+# Freesurfer
+fs_dir: /project/6007967/rhaast/04_MELAS/derivatives/freesurfer
+fs_license: /project/6007967/akhanf/opt/freesurfer/.license
+fs_setup: "export FS_LICENSE=/project/6007967/akhanf/opt/freesurfer/.license && export SUBJECTS_DIR=/project/6007967/rhaast/04_MELAS/derivatives/freesurfer &&"
+
+# Singularity
+standard: /project/6007967/akhanf/singularity/bids-apps/khanlab_neuroglia-core_latest.sif
+fmriprep: /project/6007967/akhanf/singularity/bids-apps/poldracklab_fmriprep_1.5.4.sif
+connectome_workbench: /project/6007967/software/transparentsingularity/connectome-workbench_1.4.1_20191117.simg/connectome-workbench_1.4.1_20191117.simg
+
+# Grad correct
+gradcorrect: /project/6007967/akhanf/singularity/bids-apps/khanlab_gradcorrect_v0.0.3.sif
+coeff: resources/coeff_SC72CD.grad
+
+# For topup correction
+topup_config: resources/b02b0.cnf
+acqparams: resources/acqparams.txt
+
+# For slicetime correction
+slicetiming: resources/slicetiming.txt
+
+# For MNI coregistration
+MNI: resources/MNI152_T1_1p6mm_brain.nii.gz

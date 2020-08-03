@@ -76,7 +76,7 @@ rule fnirt:
     log: 'logs/fnirt/{subject}.log'
     threads: 8
     resources:
-        time = 120,
+        time = 60,
         mem_mb = 32000
     shell:
         "fnirt --in={input.t1w} --ref={params.MNI} --aff={input.affine} --fout={output.fout} --jout={output.jout} "
@@ -88,32 +88,32 @@ rule inverse_fnirt:
         warp = rules.fnirt.output.fout
     output: 'output/coreg_anat/{subject}/nonlinear/NonlinearRegInverseWarp.nii.gz'
     group: 'coregistration'
+    threads: 8
+    resources:
+        time = 30,
+        mem_mb = 32000    
     shell:
         "invwarp -w {input.warp} -o {output} -r {input.t1w} --noconstraint"
 
-rule combine_warp:
+rule combine_warps_and_apply:
     input:
+        gdc = rules.gradient_unwarp.output.warp,
         topup = rules.run_topup.output,
         bbr = rules.fs_bbr.output.mat,
         fnirt = rules.fnirt.output.cout
     output:
-        scaled = 'output/combine_warp/{subject}/epi_fout_scaled.nii.gz',
-        combined = 'output/combine_warp/{subject}/epi_rest_gdc_bbr_mni.nii.gz'
+        warped_mni = 'output/combine_warp/{subject}/epi_rest_mni.nii.gz',
+        warped_topup = 'output/combine_warp/{subject}/epi_rest_topup.nii.gz'
     params:
-        MNI = config['MNI']
-    group: 'coregistration' 
+        epi = 'output/slicetimer/{subject}/rest/st_rest',
+        mat = 'output/motioncor/{subject}/epi_rest_mc.nii.gz.mat',
+        mni = config['MNI']  
+    group: 'coregistration'
+    log: 'logs/combine_warp/{subject}.log'              
+    threads: 8
+    resources:
+        time = 240,
+        mem_mb = 32000        
     shell:
-        "fslmaths {input.topup}/epi_fout.nii.gz -mul 0.0343097 {output.scaled} && "
-        "convertwarp --relout --rel -s {output.scaled} --premat={input.bbr} --warp1={input.fnirt} --ref={params.MNI} --out={output.combined}"
-
-## Register EPI data to MNI space 
-
-rule apply_combine_warp:    
-    input: 
-        warp = rules.combine_warp.output.combined,
-        epi = rules.apply_topup.output.firstvol,
-        ref = config['MNI']
-    output: 'output/final/{subject}/epi_rest_final.nii.gz'
-    group: 'coregistration' 
-    shell:
-        "applywarp -i {input.epi} -r {input.ref} -o {output} -w {input.warp} --rel --interp=spline"
+        "bash scripts/onestepresampling.sh {params.epi} {params.mni} {input.gdc} {params.mat} "
+        "{input.topup} {input.bbr} {input.fnirt} {output.warped_mni} &> {log}"

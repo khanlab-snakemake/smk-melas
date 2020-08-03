@@ -17,8 +17,7 @@ wildcard_constraints:
 
 rule all:
     input:
-        #epi = expand('output/epi_surf_32k_fs_LR/S001-C001/{hemi}.rsfMRI.32k_fs_LR.func.gii', hemi=hemispheres),
-        warp = expand('output/coreg_anat/{subject}/nonlinear/NonlinearRegInverseWarp.nii.gz', subject=subjects)
+        out = expand('output/epi_surf_32k_fs_LR/{subject}/{hemi}.rsfMRI.32k_fs_LR.func.gii', subject=subjects, hemi=hemispheres),
 
 ## EPI data preprocessing
 include: 'rules/preprocessing.smk'
@@ -28,3 +27,6 @@ include: 'rules/coregistration.smk'
 
 ## Surface-based data sampling  
 include: 'rules/surface.smk'
+
+## Create cifti output
+include: 'rules/cifti.smk'

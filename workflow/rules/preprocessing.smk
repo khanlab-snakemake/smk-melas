@@ -1,6 +1,8 @@
 rule slicetimer:
     input: join(config['input_dir'],'{subject}/rsfmri/{scan}.nii.gz')
-    output: 'output/slicetimer/{subject}/st_{scan}.nii.gz'
+    output: 
+        corrected ='output/slicetimer/{subject}/st_{scan}.nii.gz',
+        splitted = 'output/slicetimer/{subject}/{scan}/st_{scan}_0000.nii.gz'        
     params:
         slicetiming = config['slicetiming']
     group: 'preprocessing'     
@@ -8,7 +10,8 @@ rule slicetimer:
     log: 'logs/slicetimer/{subject}_{scan}.log'
     shell:
         "TR=`fslval {input[0]} pixdim4` && "
-        "3dTshift -prefix {output} -tpattern @{params.slicetiming} -TR $TR -tzero 0.0 {input} &> {log}"
+        "3dTshift -prefix {output.corrected} -tpattern @{params.slicetiming} -TR $TR -tzero 0.0 {input} && "
+        "fslsplit {output.corrected} `echo {output.splitted} | rev | cut -d'_' -f2-  | rev`_ -t &> {log}"
 
 rule gradient_unwarp:
     input: 'output/slicetimer/{subject}/st_rest.nii.gz'
@@ -27,7 +30,7 @@ rule gradient_unwarp:
 
 rule apply_gradient_unwarp:
     input:
-        epi = rules.slicetimer.output,
+        epi = rules.slicetimer.output.corrected,
         warp = rules.gradient_unwarp.output.warp
     output:
         unwarped = 'output/gradcorrect/{subject}/epi_{scan}_unwarped.nii.gz',
@@ -76,7 +79,10 @@ rule mc_tseries:
     params:
         optional = '-refvol 0 -sinc_final -plots -mats -verbose 2'
     group: 'preprocessing'
-    log: 'logs/motioncor/{subject}.log' 
+    log: 'logs/motioncor/{subject}.log'
+    threads: 8
+    resources:
+        mem_mb = 32000     
     shell:
         "mcflirt -in {input} -out {output} {params.optional} &> {log}"
 
@@ -91,7 +97,10 @@ rule apply_topup:
     params:
         acquisition = config['acqparams']
     group: 'preprocessing'
-    log: 'logs/apply_topup/{subject}.log'       
+    log: 'logs/apply_topup/{subject}.log'    
+    threads: 8
+    resources:
+        mem_mb = 32000       
     shell:
         "fslroi {input.epi} {output.firstvol} 0 1 && "
         "applytopup --imain={output.firstvol} --inindex=1 --datain={params.acquisition} --topup={input.topup}/epi --out={output.firstvol_gdc} --method=jac -v &> {log} && "

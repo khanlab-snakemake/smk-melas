@@ -2,22 +2,26 @@ from os.path import join
 import pandas as pd
 
 configfile: 'config/config.yaml'
-container: config['standard']
 
 # Load participants.tsv file
 df = pd.read_table(config['participants_tsv'])
 subjects = df.participant_id.to_list() 
 
+# Wildcards
 hemispheres = config['hemispheres']
 surfaces = config['surfaces']
+spaces = config['spaces']
 
 wildcard_constraints:
     subject = "[-a-zA-Z0-9]+",
-    surfaces = "white|pial|sphere.reg"
+    surfaces = "white|pial|sphere.reg",
+    space = "anat|mni|epi"
 
 rule all:
     input:
-        out = expand('output/epi_surf_32k_fs_LR/{subject}/{hemi}.rsfMRI.32k_fs_LR.func.gii', subject=subjects, hemi=hemispheres),
+        out = expand('output/denoising/correlation/{subject}/rsfMRI_den-ciftify.32k_fs_LR.pconn.nii', subject=subjects),
+        surf = expand('output/midthickness/{space}/{subject}/{hemi}.inflated.{space}.32k_fs_LR.surf.gii', space=spaces, subject=subjects, hemi=hemispheres),
+        #labels = expand('output/cifti/dlabels/{space}/{subject}/rois.dlabel.nii', space=spaces, subject=subjects)
 
 ## EPI data preprocessing
 include: 'rules/preprocessing.smk'

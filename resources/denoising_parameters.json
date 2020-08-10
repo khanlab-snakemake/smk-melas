@@ -1,0 +1,23 @@
+{
+    "--cf-sq-cols": null,
+    "--clean-config": null,
+    "--output-file": "output/denoising/dtseries/S001-C001/rsfMRI_den-ciftify.32k_fs_LR.dtseries.nii",
+    "--debug": false,
+    "--low-pass": "0.08",
+    "--drop-dummy-TRs": "5",
+    "--right-surface": null,
+    "--standardize": true,
+    "--help": false,
+    "--confounds-tsv": "output/denoising/confounds/S001-C001/confounds.tsv",
+    "--left-surface": null,
+    "--cf-cols": "CSF,WhiteMatter,X,Y,Z,RotX,RotY,RotZ",
+    "--detrend": true,
+    "--tr": "2",
+    "--high-pass": "0.009",
+    "--smooth-fwhm": null,
+    "--cf-td-cols": null,
+    "--verbose": true,
+    "--no-cleaning": false,
+    "--cf-sqtd-cols": null,
+    "<func_input>": "output/citfi/dtseries/S001-C001/rsfMRI.32k_fs_LR.dtseries.nii"
+}
